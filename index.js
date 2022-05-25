@@ -18,11 +18,35 @@ async function run() {
     try {
         await client.connect();
         const partCollection = client.db('red_parts').collection('parts');
+        const byeCollection = client.db('red_parts').collection('bye');
+
+
         app.get('/part', async (req, res) => {
             const query = {};
             const cursor = partCollection.find(query);
             const parts = await cursor.toArray();
             res.send(parts);
+        })
+
+
+
+
+
+
+
+
+        app.get('/bye', async (req, res) => {
+            const customer = req.query.customer;
+            const query = { customer: customer };
+            const bye = await byeCollection.find(query).toArray();
+            res.send(bye);
+        })
+
+
+        app.post('/bye', async (req, res) => {
+            const bye = req.body;
+            const result = await byeCollection.insertOne(bye);
+            res.send(result);
         })
 
 
