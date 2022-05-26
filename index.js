@@ -19,6 +19,9 @@ async function run() {
         await client.connect();
         const partCollection = client.db('red_parts').collection('parts');
         const byeCollection = client.db('red_parts').collection('bye');
+        const userCollection = client.db('red_parts').collection('users');
+
+
 
 
         app.get('/part', async (req, res) => {
@@ -27,6 +30,25 @@ async function run() {
             const parts = await cursor.toArray();
             res.send(parts);
         })
+
+
+
+
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(filter, updateDoc, options);
+            res.send(result);
+        })
+
+
+
+
 
 
 
@@ -41,6 +63,8 @@ async function run() {
             const bye = await byeCollection.find(query).toArray();
             res.send(bye);
         })
+
+
 
 
         app.post('/bye', async (req, res) => {
