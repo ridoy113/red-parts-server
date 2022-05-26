@@ -44,6 +44,7 @@ async function run() {
         const partCollection = client.db('red_parts').collection('parts');
         const byeCollection = client.db('red_parts').collection('bye');
         const userCollection = client.db('red_parts').collection('users');
+        const ratingCollection = client.db('red_parts').collection('ratings');
 
 
 
@@ -116,11 +117,6 @@ async function run() {
 
 
 
-
-
-
-
-
         app.get('/bye', verifyJWT, async (req, res) => {
             const customer = req.query.customer;
             const decodedEmail = req.decoded.email;
@@ -144,6 +140,24 @@ async function run() {
             const result = await byeCollection.insertOne(bye);
             res.send(result);
         })
+
+
+
+        app.get('/rating', verifyJWT, async (req, res) => {
+            const ratings = await ratingCollection.find().toArray();
+            res.send(ratings);
+        })
+
+
+
+
+        app.post('/rating', verifyJWT, async (req, res) => {
+            const rating = req.body;
+            const result = await ratingCollection.insertOne(rating);
+            res.send(result);
+        })
+
+
 
 
     }
