@@ -18,6 +18,25 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 
+function verifyJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'UnAuthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' })
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
+
+
+
+
+
 async function run() {
     try {
         await client.connect();
@@ -33,6 +52,27 @@ async function run() {
             const cursor = partCollection.find(query);
             const parts = await cursor.toArray();
             res.send(parts);
+        })
+
+
+
+        app.get('/user', verifyJWT, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        })
+
+
+
+
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send({ result });
         })
 
 
@@ -62,11 +102,19 @@ async function run() {
 
 
 
-        app.get('/bye', async (req, res) => {
+        app.get('/bye', verifyJWT, async (req, res) => {
             const customer = req.query.customer;
-            const query = { customer: customer };
-            const bye = await byeCollection.find(query).toArray();
-            res.send(bye);
+            const decodedEmail = req.decoded.email;
+
+            if (customer === decodedEmail) {
+                const query = { customer: customer };
+                const bye = await byeCollection.find(query).toArray();
+                return res.send(bye);
+            }
+            else {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
         })
 
 
