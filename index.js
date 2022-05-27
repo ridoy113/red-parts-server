@@ -3,9 +3,13 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+
+
 const app = express()
 const port = process.env.PORT || 5000;
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 
 
 
@@ -48,6 +52,9 @@ async function run() {
         const byeCollection = client.db('red_parts').collection('bye');
         const userCollection = client.db('red_parts').collection('users');
         const ratingCollection = client.db('red_parts').collection('ratings');
+        const paymentCollection = client.db('red_parts').collection('payments');
+
+
 
 
 
@@ -102,8 +109,8 @@ async function run() {
 
 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
-            const parts = req.body;
-            const price = parts.price;
+            const purches = req.body;
+            const price = purches.price;
             const amount = price * 100;
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: amount,
@@ -173,6 +180,29 @@ async function run() {
             const result = await byeCollection.insertOne(bye);
             res.send(result);
         })
+
+
+
+
+
+        app.patch('/bye/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+
+            const result = await paymentCollection.insertOne(payment);
+            const updatedBye = await byeCollection.updateOne(filter, updatedDoc);
+            res.send(updatedDoc);
+        })
+
+
+
 
 
 
