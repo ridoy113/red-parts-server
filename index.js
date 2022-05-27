@@ -143,7 +143,7 @@ async function run() {
 
 
 
-        app.get('/rating', verifyJWT, async (req, res) => {
+        app.get('/rating', async (req, res) => {
             const ratings = await ratingCollection.find().toArray();
             res.send(ratings);
         })
